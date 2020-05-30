@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+
+cache/*.pkl
+example.py
+venv/
+build/
+dist/
+instapvapi.egg-info

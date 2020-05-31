@@ -41,12 +41,26 @@
     - disableComments
     - getLiveInfo
 
+## Requirements
+```
+$ sudo apt-get install libpq-dev
+$ pip3 install -U setuptools
+$ pip3 install colorama
+$ pip3 install requests
+$ pip3 install packaging
+```
 
-## Installation
+## Install Using pip
+```
+$ pip3 install instapvapi
+```
+
+## Manual Installation
 ```
 $ git clone https://github.com/its0x4d/instagramapi-python
 $ cd instagramapi-python
+$ pip3 install -r requirements.txt
 $ python3 setup.py install
 ```
 
-Version: **0.0.2**
+Version: **0.0.6 Beta**

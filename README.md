@@ -63,4 +63,19 @@ $ pip3 install -r requirements.txt
 $ python3 setup.py install
 ```
 
+## Usage
+```python
+from instapv.bot import Bot
+
+bot = Bot('USERNAME', 'PASSWORd')
+
+bot.login() # Without calling login function the script will not work!
+
+if bot.is_logged_in:
+    print('Logged in')
+    print(bot.account_id)
+else:
+    print('Invalid username/password')
+
+```
 Version: **0.0.6 Beta**

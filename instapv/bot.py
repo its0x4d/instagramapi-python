@@ -33,8 +33,8 @@ class Bot:
         self.config = Config()
         self.tools = Tools()
         self.device = DeviceGenerator()
-        self.is_logged_in: bool = False
-        self.last_response: requests.Session() = None
+        self.is_logged_in = False
+        self.last_response = None
         self.debug = debug
         try:
             if os.path.exists(f'cache/{self.cache}.pkl'):
@@ -106,9 +106,9 @@ class Bot:
                     if (self.debug):
                         log.info(f'INFO: LOGGED IN AS {self.username}\n')
                     self.sync()
-                    # self.load_user_list()
-                    # self.get_inbox()
-                    # self.get_activity()
+                    self.load_user_list()
+                    self.get_inbox()
+                    self.get_activity()
                     return True
 
     def sync(self):
@@ -184,7 +184,7 @@ class Bot:
                 self.last_response = response
                 self.last_json_response = json.loads(response.text)
                 if self.last_json_response['message'] == 'challenge_required':
-                    raise ChallengeRequiredException('Challenge required')
+                    raise ChallengeRequiredException('Challenge required:')
                 if (self.debug):
                     log.info(f'RESPONSE: {str(self.last_json_response)}')
             except SentryBlockException:

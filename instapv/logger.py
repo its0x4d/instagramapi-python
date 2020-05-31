@@ -17,7 +17,9 @@ class Logger:
 
     def warn(self, text: str, ask: bool = False, error_code: int = None):
         now = datetime.now()
-        CLOCK = f'{Fore.BLUE}[{Fore.RESET}{Fore.GREEN}{now.strftime("%H:%M:%S")}{Fore.RESET}{Fore.BLUE}]{Fore.RESET}{self.END} '
+        CLOCK = '{}[{}{}{}{}{}]{}{} '.format(
+            Fore.BLUE, Fore.RESET, Fore.GREEN, now.strftime("%H:%M:%S"), Fore.RESET, Fore.BLUE, Fore.RESET, self.END
+        )
         if not error_code:
             if not ask:
                 print(self.YELLOW + '[!]' + CLOCK + self.BOLD + Fore.YELLOW + text + Fore.RESET + self.END)     

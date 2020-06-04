@@ -19,3 +19,6 @@ class AccessDeniedException(Exception):
 class ChallengeRequiredException(Exception):
     pass
 
+class LogedOutException(Exception):
+    pass
+

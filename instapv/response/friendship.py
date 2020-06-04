@@ -41,5 +41,7 @@ class FriendShipResponse:
                     self.is_bestie = data['is_bestie']
                 if 'is_restricted' in data:
                     self.is_restricted = data['is_restricted']
+                if 'status' in data:
+                    self.status = data['status']
             else:
                 raise UserNotFoundException('UserNotFound')

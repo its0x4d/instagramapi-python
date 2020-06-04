@@ -45,9 +45,7 @@
 ```
 $ sudo apt-get install libpq-dev
 $ pip3 install -U setuptools
-$ pip3 install colorama
-$ pip3 install requests
-$ pip3 install packaging
+$ pip3 install -r requirements.txt
 ```
 
 ## Install Using pip
@@ -67,15 +65,14 @@ $ python3 setup.py install
 ```python
 from instapv.bot import Bot
 
-bot = Bot('USERNAME', 'PASSWORd')
+bot = Bot('USERNAME', 'PASSWORD')
 
 bot.login() # Without calling login function the script will not work!
 
 if bot.is_logged_in:
-    print('Logged in')
+    print('Logged in successfuly!')
     print(bot.account_id)
 else:
     print('Invalid username/password')
-
 ```
 Version: **0.0.6 Beta**

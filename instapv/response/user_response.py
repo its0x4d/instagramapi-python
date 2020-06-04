@@ -93,9 +93,12 @@ class UserResponse(object):
                         self.is_business = self.data['is_business']
                     if 'account_type' in self.data:
                         self.account_type = self.data['account_type']
+                    if 'status' in self.data:
+                        self.status = self.data['status']
                 else:
                     raise UserNotFoundException('User not found')
             elif not data:
+                print(data)
                 raise UserNotFoundException('User not found')
         except KeyError as e:
             log.error(f'ERROR: {e}')

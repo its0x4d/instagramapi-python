@@ -6,6 +6,7 @@ import pickle
 import random
 import hashlib
 import requests
+import redis as r
 from instapv import DeviceGenerator, Config, Tools
 from instapv.exceptions import *
 from instapv.logger import Logger
@@ -22,13 +23,15 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 # Logger for debugging
 log = Logger()
 
+rcache = r.StrictRedis()
+
 if not os.path.exists('cache'):
     os.mkdir('cache')
 
 class Bot:
 
 
-    def __init__(self, username: str, password: str, debug: bool = False):
+    def __init__(self, username: str, password: str, debug: bool = False, login_cache = False):
         self.cache = hashlib.md5(username.encode('utf-8')).hexdigest()
         self.config = Config()
         self.tools = Tools()
@@ -36,8 +39,12 @@ class Bot:
         self.is_logged_in = False
         self.last_response = None
         self.debug = debug
+        self.login_cache = login_cache
+        self.username = username
+        if not os.path.exists(f'cache/{self.username}'):
+            os.mkdir(f'cache/{self.username}')
         try:
-            if os.path.exists(f'cache/{self.cache}.pkl'):
+            if os.path.exists(f'cache/{username}/{self.cache}.pkl'):
                 if self.debug:
                     log.info('Loading session...')
                 self.session(False)
@@ -45,6 +52,7 @@ class Bot:
                 if self.debug:
                     log.warn('Creating new session ...')
                 self.req = requests.Session()
+                self.login_cache = False
         except IOError:
             if self.debug:
                 log.warn('Creating new session ...')
@@ -75,41 +83,51 @@ class Bot:
 
     def session(self, create=False):
         if create:
-            with open(f'cache/{self.cache}.pkl', 'wb') as f:
+            with open(f'cache/{self.username}/{self.cache}.pkl', 'wb') as f:
                 pickle.dump(self.req, f)
         else:
-            with open(f'cache/{self.cache}.pkl', 'rb') as f:
+            with open(f'cache/{self.username}/{self.cache}.pkl', 'rb') as f:
                 self.req = pickle.load(f)
 
     def login(self):
-        proxy = self.req.proxies.get('http')
-        if not self.is_logged_in:
-            endpoint = f'si/fetch_headers/?challenge_type=signup&guid={self.tools.generate_uuid(False)}'
-            request  = self.request(endpoint, login=True)
-            if request: 
-                data = {
-                    'phone_id': self.tools.generate_uuid(True),
-                    '_csrftoken': self.last_response.cookies['csrftoken'],
-                    'username': self.username,
-                    'guid': self.uuid,
-                    'device_id': self.device_id,
-                    'password': self.password,
-                    'login_attempt_count': '0'
-                }
-                if self.request('accounts/login/', data, True):
-                    self.is_logged_in = True
-                    self.account_id = self.last_json_response["logged_in_user"]["pk"]
-                    self.rank_token = self.uuid
-                    self.token = self.last_response.cookies["csrftoken"]
-                    if (not os.path.exists(f'cache/{self.cache}.pkl')):
-                        pass
-                    if (self.debug):
-                        log.info(f'INFO: LOGGED IN AS {self.username}\n')
-                    self.sync()
-                    self.load_user_list()
-                    self.get_inbox()
-                    self.get_activity()
-                    return True
+        if self.login_cache:
+            self.is_logged_in = True if rcache.get(f'{self.username}_is_logged_in') else False
+            self.account_id = str(rcache.get(f'{self.username}_account_id'), 'utf-8')
+            self.rank_token = str(rcache.get(f'{self.username}_rank_token'), 'utf-8')
+            self.token = str(rcache.get(f'{self.username}_token'), 'utf-8')
+            return True
+        else:
+            if not self.is_logged_in:
+                endpoint = f'si/fetch_headers/?challenge_type=signup&guid={self.tools.generate_uuid(False)}'
+                request  = self.request(endpoint, login=True)
+                if request: 
+                    data = {
+                        'phone_id': self.tools.generate_uuid(True),
+                        '_csrftoken': self.last_response.cookies['csrftoken'],
+                        'username': self.username,
+                        'guid': self.uuid,
+                        'device_id': self.device_id,
+                        'password': self.password,
+                        'login_attempt_count': '0'
+                    }
+                    if self.request('accounts/login/', data, True):
+                        self.is_logged_in = True
+                        self.account_id = self.last_json_response["logged_in_user"]["pk"]
+                        self.rank_token = self.uuid
+                        self.token = self.last_response.cookies["csrftoken"]
+                        rcache.set(f'{self.username}_is_logged_in', 1)
+                        rcache.set(f'{self.username}_account_id', self.last_json_response["logged_in_user"]["pk"])
+                        rcache.set(f'{self.username}_rank_token', self.uuid)
+                        rcache.set(f'{self.username}_token', self.last_response.cookies["csrftoken"])
+                        if (not os.path.exists(f'cache/{self.cache}.pkl')):
+                            pass
+                        if (self.debug):
+                            log.info(f'INFO: LOGGED IN AS {self.username}\n')
+                        self.sync()
+                        self.load_user_list()
+                        self.get_inbox()
+                        self.get_activity()
+                        return True
 
     def sync(self):
         params = {
@@ -140,8 +158,7 @@ class Bot:
             log.info(f"REQUEST: {self.config.API_URL + endpoint}")
 
         if not self.is_logged_in and not login:
-            if 'bad_password' in self.last_json_response:
-                raise InvalidCredentialsException(self.last_json_response['error_title'])
+            return False
 
         self.req.headers.update({'Connection': 'close',
             'Accept': '*/*',
@@ -154,13 +171,14 @@ class Bot:
         while True:
             try:
                 if params:
+                    print(params)
                     if signed_post:
                         params = self.tools.generate_signature(
                             json.dumps(params)
                         )
-                    response = self.req.post(self.config.API_URL + endpoint, data=params)
+                    response = self.req.post(self.config.API_URL + endpoint, data=params, verify=True)
                 else:
-                    response = self.req.get(self.config.API_URL + endpoint)
+                    response = self.req.get(self.config.API_URL + endpoint, verify=True)
                 if self.debug:
                     log.info(f'CODE: {str(response.status_code)}', True)
                     log.info(f"RESPONSE: {response.text}\n")
@@ -183,8 +201,14 @@ class Bot:
             try:
                 self.last_response = response
                 self.last_json_response = json.loads(response.text)
+                if self.last_json_response['message'] == 'login_required':
+                    os.remove(f'cache/{self.username}/{self.cache}.pkl')
+                    raise LogedOutException('Ssaved account password has changed and the old session has been deleted. Please log back in.')
                 if self.last_json_response['message'] == 'challenge_required':
-                    raise ChallengeRequiredException('Challenge required:')
+                    raise ChallengeRequiredException('Challenge required')
+                if self.last_json_response['message'] == 'The password you entered is incorrect. Please try again.':
+                    os.remove(f'cache/{self.username}/{self.cache}.pkl')
+                    raise InvalidCredentialsException(self.last_json_response['message'])
                 if (self.debug):
                     log.info(f'RESPONSE: {str(self.last_json_response)}')
             except SentryBlockException:

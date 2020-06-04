@@ -1,5 +1,13 @@
 import json
 from instapv.response.media_info import MediaInfoResponse
+from requests_toolbelt import MultipartEncoder
+from time import time
+
+# Fix Python3 Import Error.
+try:
+    from ImageUtils import getImageSize
+except:
+    from instapv.utils.ImageUtils import getImageSize
 
 
 class Media:
@@ -19,8 +27,11 @@ class Media:
         data = {
             '_csrftoken': self.bot.token,
             '_uuid': self.bot.uuid,
+            '_uid': self.bot.account_id,
+            'media_id': str(media_id) + '_' + str(self.bot.account_id)
         }
-        query = self.bot.request(f'media/{media_id}/enable_comments', params=data)
+        query = self.bot.request(
+            f'media/{media_id}_{self.bot.account_id}/enable_comments', params=data, signed_post=True)
         return query
 
     def disable_comments(self, media_id):
@@ -28,9 +39,10 @@ class Media:
             '_csrftoken': self.bot.token,
             '_uuid': self.bot.uuid,
             '_uid': self.bot.account_id,
-            'media_id': media_id
+            'media_id': str(media_id) + '_' + str(self.bot.account_id)
         }
-        query = self.bot.request(f'media/{media_id}/disable_comments', params=data)
+        query = self.bot.request(
+            f'media/{media_id}_{self.bot.account_id}/disable_comments', params=data)
         return query
 
     def edit(self, media_id: str, caption_text):
@@ -40,7 +52,8 @@ class Media:
             '_csrftoken': self.bot.token,
             'caption_text': caption_text
         }
-        query = self.bot.request(f'media/{media_id}/edit_media/', params=data)
+        query = self.bot.request(f'media/{media_id}_{self.bot.account_id}/edit_media/', params=data)
+        return query
 
     def delete(self, media_id: str, media_type: str = 'PHOTO'):
         data = {
@@ -98,6 +111,8 @@ class Media:
         return query
 
     def get_comment_replais(self, media_id, comment_id):
+        if not isinstance(comment_id, int):
+            raise ValueError('comment_id must be integers.')
         query = self.bot.request(
             f'media/{media_id}/comments/{comment_id}/inline_child_comments/')
         return query
@@ -111,6 +126,59 @@ class Media:
         query = self.bot.request(
             f'media/{media_id}/comment/{comment_id}/delete/', params=data)
         return query
+
+    def upload_photo(self, photo, caption=None, upload_id=None, is_sidecar=None):
+        if upload_id is None:
+            upload_id = str(int(time() * 1000))
+        data = {
+            'upload_id': upload_id,
+            '_uuid': self.bot.uuid,
+            '_csrftoken': self.bot.token,
+            'image_compression': '{"lib_name":"jt","lib_version":"1.3.0","quality":"87"}',
+            'photo': ('pending_media_%s.jpg' % upload_id, open(photo, 'rb'), 'application/octet-stream', {'Content-Transfer-Encoding': 'binary'})
+        }
+        if is_sidecar:
+            data['is_sidecar'] = '1'
+        m = MultipartEncoder(data, boundary=self.bot.uuid)
+        self.bot.req.headers.update({
+            'X-IG-Capabilities': '3Q4=',
+            'X-IG-Connection-Type': 'WIFI',
+            'Cookie2': '$Version=1',
+            'Accept-Language': 'en-US',
+            'Accept-Encoding': 'gzip, deflate',
+            'Content-type': m.content_type,
+            'Connection': 'close',
+            'User-Agent': self.bot.device.build_user_agent()
+        })
+        response = self.bot.request(
+            "upload/photo/", params=m.to_string())
+        if response.status_code == 200:
+            if self.bot.configure(upload_id, photo, caption):
+                self.bot.expose()
+        return False
+
+    def configure(self, upload_id, photo, caption=''):
+        (w, h) = getImageSize(photo)
+        data = json.dumps({
+            '_csrftoken': self.bot.token,
+            'media_folder': 'Instagram',
+            'source_type': 4,
+            '_uid': self.bot.account_id,
+            '_uuid': self.bot.uuid,
+            'caption': caption,
+            'upload_id': upload_id,
+            'device': self.bot.device.generate_device(),
+            'edits': {
+                'crop_original_size': [w * 1.0, h * 1.0],
+                'crop_center': [0.0, 0.0],
+                'crop_zoom': 1.0
+            },
+            'extra': {
+                'source_width': w,
+                'source_height': h
+            }
+        })
+        return self.bot.request('media/configure/?', params=data)
 
     def code_to_media_id(self, short_code: str):
         media_id = 0

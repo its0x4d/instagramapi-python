@@ -72,7 +72,8 @@ class Bot:
         if proxy is not None:
             proxies = {'http': proxy}
             self.req.proxies.update(proxies)
-
+        else:
+            self.req.proxies.clear()
 
     def set_user(self, username: str, password: str):
         self._s = hashlib.md5()
@@ -89,14 +90,15 @@ class Bot:
             with open(f'cache/{self.username}/{self.cache}.pkl', 'rb') as f:
                 self.req = pickle.load(f)
 
-    def login(self):
-        if self.login_cache:
+    def login(self, relogin=False):
+        if self.login_cache and not relogin:
             self.is_logged_in = True if rcache.get(f'{self.username}_is_logged_in') else False
             self.account_id = str(rcache.get(f'{self.username}_account_id'), 'utf-8')
             self.rank_token = str(rcache.get(f'{self.username}_rank_token'), 'utf-8')
             self.token = str(rcache.get(f'{self.username}_token'), 'utf-8')
             return True
         else:
+            self.is_logged_in = False
             if not self.is_logged_in:
                 endpoint = f'si/fetch_headers/?challenge_type=signup&guid={self.tools.generate_uuid(False)}'
                 request  = self.request(endpoint, login=True)
@@ -153,7 +155,7 @@ class Bot:
         activity = self.request('news/inbox/?')
         return activity
 
-    def request(self, endpoint: str, params: dict = None, login: bool = False, signed_post: bool = True):
+    def request(self, endpoint: str, params: dict = None, login: bool = False, signed_post: bool = True, api = True):
         if self.debug:
             log.info(f"REQUEST: {self.config.API_URL + endpoint}")
 
@@ -171,7 +173,6 @@ class Bot:
         while True:
             try:
                 if params:
-                    print(params)
                     if signed_post:
                         params = self.tools.generate_signature(
                             json.dumps(params)
@@ -213,4 +214,4 @@ class Bot:
                     log.info(f'RESPONSE: {str(self.last_json_response)}')
             except SentryBlockException:
                 raise
-            return False
+            return self.last_json_response

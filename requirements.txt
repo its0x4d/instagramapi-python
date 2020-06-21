@@ -1,5 +1,11 @@
-setuptools
-requests
-colorama
-packaging
-redis
+certifi==2020.4.5.2
+chardet==3.0.4
+colorama==0.4.3
+idna==2.9
+packaging==20.4
+pyparsing==2.4.7
+redis==3.5.3
+requests==2.24.0
+requests-toolbelt==0.9.1
+six==1.15.0
+urllib3==1.25.9

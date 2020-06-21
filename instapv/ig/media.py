@@ -1,5 +1,6 @@
 import json
 from instapv.response.media_info import MediaInfoResponse
+from instapv.response.send_comment import SendCommentInfoResponse
 from requests_toolbelt import MultipartEncoder
 from time import time
 
@@ -23,26 +24,62 @@ class Media:
         query = self.bot.request(f'media/{media_id}/likers/?')
         return query
 
+    def comment(self, media_id, comment_text, reply_comment_id = None, module = 'comments_v2', carousel_index = 0, feed_position = 0, feed_bumped = False):
+        data = {
+            'user_breadcrumb': comment_text,
+            'idempotence_token': self.bot.tools.generate_uuid(True),
+            '_uuid': self.bot.uuid,
+            '_uid': self.bot.account_id,
+            '_csrftoken': self.bot.token,
+            'comment_text': comment_text,
+            'container_module': module,
+            'radio_type': 'wifi-none',
+            'device_id': self.bot.device_id,
+            'carousel_index': carousel_index,
+            'feed_position': feed_position,
+            'is_carousel_bumped_post': feed_bumped
+        }
+        if reply_comment_id != None:
+            data.update({
+                'replied_to_comment_id': reply_comment_id
+            })
+        
+        query = self.bot.request(f'media/{media_id}/comment/', params=data, signed_post=False)
+        return SendCommentInfoResponse(query)
+
+    def get_comment_infos(self, media_ids):
+        if isinstance(media_ids, list):
+            media_ids = ','.join(media_ids)
+
+        query = self.bot.request(f'media/comment_infos?media_ids={media_ids}')
+        return query
+
+    def delete_comment(self, media_id, comment_id):
+        data = {
+            '_uuid': self.bot.uuid,
+            '_uid': self.bot.account_id,
+            '_csrftoken': self.bot.token,
+            
+        }
+        query = self.bot.request(f'media/{media_id}/comment/{comment_id}/delete/', params=data, signed_post=False)
+        return query
+
     def enable_comments(self, media_id):
         data = {
             '_csrftoken': self.bot.token,
             '_uuid': self.bot.uuid,
-            '_uid': self.bot.account_id,
-            'media_id': str(media_id) + '_' + str(self.bot.account_id)
         }
         query = self.bot.request(
-            f'media/{media_id}_{self.bot.account_id}/enable_comments', params=data, signed_post=True)
+            f'media/{media_id}/enable_comments/', params=data, signed_post=False)
         return query
 
     def disable_comments(self, media_id):
         data = {
             '_csrftoken': self.bot.token,
             '_uuid': self.bot.uuid,
-            '_uid': self.bot.account_id,
-            'media_id': str(media_id) + '_' + str(self.bot.account_id)
         }
         query = self.bot.request(
-            f'media/{media_id}_{self.bot.account_id}/disable_comments', params=data)
+            f'media/{media_id}/disable_comments/', params=data, signed_post=False)
         return query
 
     def edit(self, media_id: str, caption_text):

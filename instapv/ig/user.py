@@ -16,7 +16,7 @@ class User:
             'ranked_token': 'true'
         }
 
-        query = self.bot.request('feed/user/%s/' % (user_id), params=data)
+        query = self.bot.request(f'feed/user/{user_id}/', params=data)
         return UserResponse(query)
 
     def get_self_user_feed(self, max_id: str = None, timestamp: str = None):
@@ -27,8 +27,7 @@ class User:
             'ranked_token': 'true'
         }
 
-        query = self.bot.request(
-            f'feed/user/{self.bot.account_id}/', params=data)
+        query = self.bot.request(f'feed/user/{self.bot.account_id}/', params=data)
         return SelfUserFeedResponse(query)
 
     def get_info_by_name(self, username):
@@ -42,8 +41,7 @@ class User:
             'user_id': user_id,
             '_csrftoken': self.bot.token
         }
-        query = self.bot.request(
-            'friendships/approve/' + str(user_id) + '/', params=True, signed_post=True)
+        query = self.bot.request(f'friendships/approve/{user_id}/', params=data, signed_post=True)
         return FriendShipResponse(query)
 
     def follow_request_ignore(self, user_id):
@@ -53,8 +51,7 @@ class User:
             'user_id': user_id,
             '_csrftoken': self.bot.token
         }
-        query = self.bot.request(
-            'friendships/ignore/' + str(user_id) + '/', params=True, signed_post=True)
+        query = self.bot.request(f'friendships/ignore/{user_id}/', params=data, signed_post=True)
         return FriendShipResponse(query)
 
     def follow(self, user_id, media_id=None):
@@ -68,8 +65,7 @@ class User:
         }
         if media_id:
             data.update({'media_id_attribution': media_id})
-        query = self.bot.request(
-            'friendships/create/' + str(user_id) + '/', params=True, signed_post=True)
+        query = self.bot.request(f'friendships/create/{user_id}/', params=data, signed_post=True)
         return FriendShipResponse(query)
 
     def unfollow(self, user_id):
@@ -79,8 +75,7 @@ class User:
             'user_id': user_id,
             '_csrftoken': self.bot.token
         }
-        query = self.bot.request(
-            'friendships/destroy/' + str(user_id) + '/', params=True, signed_post=True)
+        query = self.bot.request(f'friendships/destroy/{user_id}/', params=data, signed_post=True)
         return FriendShipResponse(query)
 
     def block(self, user_id):
@@ -90,8 +85,7 @@ class User:
             'user_id': user_id,
             '_csrftoken': self.bot.token
         }
-        query = self.bot.request(
-            'friendships/block/' + str(user_id) + '/', params=True, signed_post=True)
+        query = self.bot.request(f'friendships/block/{user_id}/', params=data, signed_post=True)
         return FriendShipResponse(query)
 
     def unblock(self, user_id):
@@ -101,19 +95,15 @@ class User:
             'user_id': user_id,
             '_csrftoken': self.bot.token
         }
-        query = self.bot.request(
-            'friendships/unblock/' + str(user_id) + '/', params=True, signed_post=True)
+        query = self.bot.request(f'friendships/unblock/{user_id}/', params=data, signed_post=True)
         return FriendShipResponse(query)
 
     def get_user_followers(self, user_id, max_id: str = None):
         if max_id == None:
-            query = self.bot.request('friendships/' + str(user_id) +
-                                     '/followers/?rank_token=' + self.bot.tools.generate_uuid(True))
+            query = self.bot.request(f'friendships/{user_id}/followers/?rank_token=' + self.bot.tools.generate_uuid(True))
             return UserResponse(query['users'])
-        else:
-            query = self.bot.request('friendships/' + str(user_id) + '/followers/?rank_token=' +
-                                     self.bot.tools.generate_uuid(True) + '&max_id=' + str(max_id))
-            return UserResponse(query['users'])
+        query = self.bot.request(f'friendships/{user_id}/followers/?rank_token={self.bot.tools.generate_uuid(True)}&max_id={max_id}')
+        return UserResponse(query['users'])
 
     def get_pending_follow_requests(self):
         query = self.bot.request('friendships/pending?')
@@ -121,13 +111,10 @@ class User:
 
     def get_user_following(self, user_id, max_id: str = None):
         if max_id == None:
-            query = self.bot.request('friendships/' + str(user_id) +
-                                     '/following/?rank_token=' + self.bot.tools.generate_uuid(True))
+            query = self.bot.request(f'friendships/{user_id}/following/?rank_token=' + self.bot.tools.generate_uuid(True))
             return UserResponse(query['users'])
-        else:
-            query = self.bot.request('friendships/' + str(user_id) + '/following/?rank_token=' +
-                                     self.bot.tools.generate_uuid(True) + '&max_id=' + str(max_id))
-            return UserResponse(query['users'])
+        query = self.bot.request(f'friendships/{user_id}/following/?rank_token={self.bot.tools.generate_uuid(True)}&max_id={max_id}')
+        return UserResponse(query['users'])
 
     def get_all_followers(self, user_id):
         followers = []

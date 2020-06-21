@@ -1,18 +1,16 @@
 import setuptools
 
-with open('README.md') as file:
-    long_desc = file.read()
-
 setuptools.setup(
     name="instapvapi",
-    version="0.0.8",
+    version="0.1.0",
     author="UWSGI",
     url="https://github.com/its0x4d/instagramapi-python",
     author_email="mosydev2016@gmail.com",
     description="An unofficial instagram private api.",
-    packages=setuptools.find_packages(include=['requests', 'colorama', 'packaging', 'redis']),
+    packages=setuptools.find_packages(),
     platforms=['any'],
     license="MIT",
+    install_requires=['redis', 'packaging', 'colorama', 'requests'],
     long_description="An unofficial instagram private api written in python. Thanks to mgp25.",
     classifiers=[
         "Programming Language :: Python :: 3",

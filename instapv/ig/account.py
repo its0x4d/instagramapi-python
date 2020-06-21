@@ -14,14 +14,19 @@ class Account:
             '_uid': self.bot.account_id,
             '_csrftoken': self.bot.token
         }
-        query = self.bot.request('accounts/set_private/')
+        query = self.bot.request('accounts/set_private/', data)
         if query['status'] == 'ok':
             return True
         else:
             return False
 
     def set_public(self):
-        query = self.bot.request('accounts/set_public/')
+        data = {
+            '_uuid': self.bot.uuid,
+            '_uid': self.bot.account_id,
+            '_csrftoken': self.bot.token
+        }
+        query = self.bot.request('accounts/set_public/', data)
         if query['status'] == 'ok':
             return True
         else:

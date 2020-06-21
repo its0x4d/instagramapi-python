@@ -14,7 +14,7 @@ class DeviceGenerator:
             '23/6.0.1; 640dpi; 1440x2560; ZTE; ZTE A2017U; ailsa_ii; qcom',
             '23/6.0.1; 640dpi; 1440x2560; samsung; SM-G935F; hero2lte; samsungexynos8890',
             '23/6.0.1; 640dpi; 1440x2560; samsung; SM-G930F; herolte; samsungexynos8890',
-        ];
+        ]
 
         self.REQUIRED_ANDROID_VERSION = '2.2'
         self.USER_AGENT_FORMAT = 'Instagram %s Android (%s/%s; %s; %s; %s; %s; %s; %s; %s)'
@@ -84,7 +84,7 @@ class DeviceGenerator:
         self._userAgent = self.build_user_agent()
 
 
-    def build_user_agent(self, appVersion: str = '27.0.0.7.97', userLocale: str = 'en_US'):
+    def build_user_agent(self, appVersion: str = '29.0.0.7.97', userLocale: str = 'en_US'):
         manufacturer = self._manufacturer
         if self._brand != None:
             manufacturer = '/' + self._brand

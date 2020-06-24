@@ -22,3 +22,5 @@ class ChallengeRequiredException(Exception):
 class LogedOutException(Exception):
     pass
 
+class InternalException(Exception):
+    pass

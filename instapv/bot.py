@@ -96,6 +96,7 @@ class Bot:
             self.account_id = str(rcache.get(f'{self.username}_account_id'), 'utf-8')
             self.rank_token = str(rcache.get(f'{self.username}_rank_token'), 'utf-8')
             self.token = str(rcache.get(f'{self.username}_token'), 'utf-8')
+            self.phone_id = str(rcache.get(f'{self.username}_phone_id'), 'utf-8')
             return True
         else:
             self.is_logged_in = False
@@ -113,6 +114,7 @@ class Bot:
                         'login_attempt_count': '0'
                     }
                     if self.request('accounts/login/', data, True):
+                        self.phone_id = self.tools.generate_uuid(True)
                         self.is_logged_in = True
                         self.account_id = self.last_json_response["logged_in_user"]["pk"]
                         self.rank_token = self.uuid
@@ -121,6 +123,7 @@ class Bot:
                         rcache.set(f'{self.username}_account_id', self.last_json_response["logged_in_user"]["pk"])
                         rcache.set(f'{self.username}_rank_token', self.uuid)
                         rcache.set(f'{self.username}_token', self.last_response.cookies["csrftoken"])
+                        rcache.set(f'{self.username}_phone_id', self.phone_id)
                         if (not os.path.exists(f'cache/{self.cache}.pkl')):
                             pass
                         if (self.debug):
@@ -155,7 +158,7 @@ class Bot:
         activity = self.request('news/inbox/?')
         return activity
 
-    def request(self, endpoint: str, params: dict = None, login: bool = False, signed_post: bool = True, api = True):
+    def request(self, endpoint: str, params: dict = None, login: bool = False, signed_post: bool = True, files = None):
         if self.debug:
             log.info(f"REQUEST: {self.config.API_URL + endpoint}")
 
@@ -170,24 +173,24 @@ class Bot:
             'User-Agent': self.device.build_user_agent()
         })
 
-        while True:
-            try:
-                if params:
-                    if signed_post:
-                        params = self.tools.generate_signature(
-                            json.dumps(params)
-                        )
-                    response = self.req.post(self.config.API_URL + endpoint, data=params, verify=True)
-                else:
-                    response = self.req.get(self.config.API_URL + endpoint, verify=True)
-                if self.debug:
-                    log.info(f'CODE: {str(response.status_code)}', True)
-                    log.info(f"RESPONSE: {response.text}\n")
-                break
-            except Exception as e:
-                log.error(f'ERROR: An error orrcured trying after 120 seconds')
-                log.error(f'ERROR: {e}')
-                time.sleep(10)
+        if params:
+            if signed_post:
+                params = self.tools.generate_signature(
+                    json.dumps(params)
+                )
+            if files:
+                self.req.headers.update({
+                    'Content-type': 'multipart/form-data'
+                })
+                print(self.req.headers)
+                response = self.req.post(self.config.API_URL + endpoint, files=files, data=params, verify=True)
+            else:
+                response = self.req.post(self.config.API_URL + endpoint, data=params, verify=True)
+        else:
+            response = self.req.get(self.config.API_URL + endpoint, verify=True)
+        if self.debug:
+            log.info(f'CODE: {str(response.status_code)}', True)
+            log.info(f"RESPONSE: {response.text}\n")
 
         if response.status_code == 200:
             self.last_response = response

@@ -154,15 +154,6 @@ class Media:
             f'media/{media_id}/comments/{comment_id}/inline_child_comments/')
         return query
 
-    def delete_comment(self, media_id, comment_id):
-        data = {
-            '_uuid': self.bot.uuid,
-            '_uid': self.bot.account_id,
-            '_csrftoken': self.bot.token
-        }
-        query = self.bot.request(
-            f'media/{media_id}/comment/{comment_id}/delete/', params=data)
-        return query
 
     def upload_photo(self, photo, caption=None, upload_id=None, is_sidecar=None):
         if upload_id is None:

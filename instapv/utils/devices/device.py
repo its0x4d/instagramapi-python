@@ -1,7 +1,9 @@
 import random
 import hashlib
 from packaging import version
+from instapv.config import Config
 
+_config = Config() 
 
 class DeviceGenerator:
     
@@ -84,13 +86,13 @@ class DeviceGenerator:
         self._userAgent = self.build_user_agent()
 
 
-    def build_user_agent(self, appVersion: str = '29.0.0.7.97', userLocale: str = 'en_US'):
+    def build_user_agent(self):
         manufacturer = self._manufacturer
         if self._brand != None:
             manufacturer = '/' + self._brand
 
         device = self.USER_AGENT_FORMAT % (
-            '27.0.0.7.97',
+            _config.IG_VERSION,
             self._androidVersion,
             self._androidRelease,
             self._dpi,
@@ -99,7 +101,7 @@ class DeviceGenerator:
             self._model,
             self._device,
             self._cpu,
-            userLocale,
+            _config.USER_AGENT_LOCALE,
         )
         return device
 

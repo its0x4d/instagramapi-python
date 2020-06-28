@@ -101,9 +101,9 @@ class User:
     def get_user_followers(self, user_id, max_id: str = None):
         if max_id == None:
             query = self.bot.request(f'friendships/{user_id}/followers/?rank_token=' + self.bot.tools.generate_uuid(True))
-            return UserResponse(query['users'])
+            return query
         query = self.bot.request(f'friendships/{user_id}/followers/?rank_token={self.bot.tools.generate_uuid(True)}&max_id={max_id}')
-        return UserResponse(query['users'])
+        return query
 
     def get_pending_follow_requests(self):
         query = self.bot.request('friendships/pending?')

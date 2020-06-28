@@ -102,9 +102,9 @@ class Account:
             '_uid': self.bot.account_id,
         }
         _photo = {
-            'profile_pic': (photo_filename, open(photo_filename, 'rb'), 'application/octet-stream' ) 
+            'profile_pic': (photo_filename, open(photo_filename, 'rb'), 'application/octet-stream')
         }
-        query = self.bot.request('accounts/change_profile_picture/', params=data, files=_photo)
+        query = self.bot.request('accounts/change_profile_picture/', params=data, files=_photo, signed_post=False)
         return query
     
     def remove_profile_picture(self):

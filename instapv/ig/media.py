@@ -1,6 +1,8 @@
 import json
 from instapv.response.media_info import MediaInfoResponse
 from instapv.response.send_comment import SendCommentInfoResponse
+from instapv.response.generic import GenericResponse
+from instapv.response.comments import MediaCommentsResponse
 from requests_toolbelt import MultipartEncoder
 from time import time
 
@@ -101,7 +103,7 @@ class Media:
             '_uid': self.bot.account_id,
             'media_id': media_id
         }
-        return self.bot.request(f'media/{media_id}/delete', params=data)
+        return self.bot.request(f'media/{media_id}/delete/', params=data)
 
     def like(self, media_id: str):
         data = {
@@ -110,7 +112,8 @@ class Media:
             '_csrftoken': self.bot.token,
             'media_id': media_id
         }
-        return self.bot.request(f'media/{media_id}/like/', params=data)
+        query = self.bot.request(f'media/{media_id}/like/', params=data)
+        return GenericResponse(query)
 
     def unlike(self, media_id: str):
         data = {
@@ -119,7 +122,8 @@ class Media:
             '_csrftoken': self.bot.token,
             'media_id': media_id
         }
-        return self.bot.request(f'media/{media_id}/unlike/', params=data)
+        query = self.bot.request(f'media/{media_id}/unlike/', params=data)
+        return GenericResponse(query)
 
     def save(self, media_id: str):
         data = {
@@ -128,7 +132,8 @@ class Media:
             '_csrftoken': self.bot.token,
             'media_id': media_id
         }
-        return self.bot.request(f'media/{media_id}/save/', params=data)
+        query = self.bot.request(f'media/{media_id}/save/', params=data)
+        return GenericResponse(query)
 
     def unsave(self, media_id: str):
         data = {
@@ -137,7 +142,8 @@ class Media:
             '_csrftoken': self.bot.token,
             'media_id': media_id
         }
-        return self.bot.request(f'media/{media_id}/unsave/', params=data)
+        query = self.bot.request(f'media/{media_id}/unsave/', params=data)
+        return GenericResponse(query)
 
     def get_comments(self, media_id, max_id=''):
         data = {
@@ -145,7 +151,7 @@ class Media:
             'max_id': max_id
         }
         query = self.bot.request(f'media/{media_id}/comments/', params=data)
-        return query
+        return MediaCommentsResponse(query)
 
     def get_comment_replais(self, media_id, comment_id):
         if not isinstance(comment_id, int):
@@ -155,58 +161,58 @@ class Media:
         return query
 
 
-    def upload_photo(self, photo, caption=None, upload_id=None, is_sidecar=None):
-        if upload_id is None:
-            upload_id = str(int(time() * 1000))
-        data = {
-            'upload_id': upload_id,
-            '_uuid': self.bot.uuid,
-            '_csrftoken': self.bot.token,
-            'image_compression': '{"lib_name":"jt","lib_version":"1.3.0","quality":"87"}',
-            'photo': ('pending_media_%s.jpg' % upload_id, open(photo, 'rb'), 'application/octet-stream', {'Content-Transfer-Encoding': 'binary'})
-        }
-        if is_sidecar:
-            data['is_sidecar'] = '1'
-        m = MultipartEncoder(data, boundary=self.bot.uuid)
-        self.bot.req.headers.update({
-            'X-IG-Capabilities': '3Q4=',
-            'X-IG-Connection-Type': 'WIFI',
-            'Cookie2': '$Version=1',
-            'Accept-Language': 'en-US',
-            'Accept-Encoding': 'gzip, deflate',
-            'Content-type': m.content_type,
-            'Connection': 'close',
-            'User-Agent': self.bot.device.build_user_agent()
-        })
-        response = self.bot.request(
-            "upload/photo/", params=m.to_string())
-        if response.status_code == 200:
-            if self.bot.configure(upload_id, photo, caption):
-                self.bot.expose()
-        return False
+    # def upload_photo(self, photo, caption=None, upload_id=None, is_sidecar=None):
+    #     if upload_id is None:
+    #         upload_id = str(int(time() * 1000))
+    #     data = {
+    #         'upload_id': upload_id,
+    #         '_uuid': self.bot.uuid,
+    #         '_csrftoken': self.bot.token,
+    #         'image_compression': '{"lib_name":"jt","lib_version":"1.3.0","quality":"87"}',
+    #         'photo': ('pending_media_%s.jpg' % upload_id, open(photo, 'rb'), 'application/octet-stream', {'Content-Transfer-Encoding': 'binary'})
+    #     }
+    #     if is_sidecar:
+    #         data['is_sidecar'] = '1'
+    #     m = MultipartEncoder(data, boundary=self.bot.uuid)
+    #     self.bot.req.headers.update({
+    #         'X-IG-Capabilities': '3Q4=',
+    #         'X-IG-Connection-Type': 'WIFI',
+    #         'Cookie2': '$Version=1',
+    #         'Accept-Language': 'en-US',
+    #         'Accept-Encoding': 'gzip, deflate',
+    #         'Content-type': m.content_type,
+    #         'Connection': 'close',
+    #         'User-Agent': self.bot.device.build_user_agent()
+    #     })
+    #     response = self.bot.request(
+    #         "upload/photo/", params=m.to_string())
+    #     if response.status_code == 200:
+    #         if self.bot.configure(upload_id, photo, caption):
+    #             self.bot.expose()
+    #     return False
 
-    def configure(self, upload_id, photo, caption=''):
-        (w, h) = getImageSize(photo)
-        data = json.dumps({
-            '_csrftoken': self.bot.token,
-            'media_folder': 'Instagram',
-            'source_type': 4,
-            '_uid': self.bot.account_id,
-            '_uuid': self.bot.uuid,
-            'caption': caption,
-            'upload_id': upload_id,
-            'device': self.bot.device.generate_device(),
-            'edits': {
-                'crop_original_size': [w * 1.0, h * 1.0],
-                'crop_center': [0.0, 0.0],
-                'crop_zoom': 1.0
-            },
-            'extra': {
-                'source_width': w,
-                'source_height': h
-            }
-        })
-        return self.bot.request('media/configure/?', params=data)
+    # def configure(self, upload_id, photo, caption=''):
+    #     (w, h) = getImageSize(photo)
+    #     data = json.dumps({
+    #         '_csrftoken': self.bot.token,
+    #         'media_folder': 'Instagram',
+    #         'source_type': 4,
+    #         '_uid': self.bot.account_id,
+    #         '_uuid': self.bot.uuid,
+    #         'caption': caption,
+    #         'upload_id': upload_id,
+    #         'device': self.bot.device.generate_device(),
+    #         'edits': {
+    #             'crop_original_size': [w * 1.0, h * 1.0],
+    #             'crop_center': [0.0, 0.0],
+    #             'crop_zoom': 1.0
+    #         },
+    #         'extra': {
+    #             'source_width': w,
+    #             'source_height': h
+    #         }
+    #     })
+    #     return self.bot.request('media/configure/?', params=data)
 
     def code_to_media_id(self, short_code: str):
         media_id = 0

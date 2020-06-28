@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="instapvapi",
-    version="0.1.3",
+    version="0.1.4",
     author="UWSGI",
     url="https://github.com/its0x4d/instagramapi-python",
     author_email="mosydev2016@gmail.com",

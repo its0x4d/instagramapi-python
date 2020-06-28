@@ -2,6 +2,8 @@ import json
 from instapv.response.user_response import UserResponse
 from instapv.response.friendship import FriendShipResponse
 from instapv.response.self_user_feed import SelfUserFeedResponse
+from instapv.response.following import UserFollowingResponse
+from instapv.response.followers import UserFollowersResponse
 
 class User:
 
@@ -100,10 +102,10 @@ class User:
 
     def get_user_followers(self, user_id, max_id: str = None):
         if max_id == None:
-            query = self.bot.request(f'friendships/{user_id}/followers/?rank_token=' + self.bot.tools.generate_uuid(True))
-            return query
-        query = self.bot.request(f'friendships/{user_id}/followers/?rank_token={self.bot.tools.generate_uuid(True)}&max_id={max_id}')
-        return query
+            query = self.bot.request(f'friendships/{user_id}/followers/?rank_token={self.bot.tools.generate_uuid(True)}')
+        else:
+            query = self.bot.request(f'friendships/{user_id}/followers/?rank_token={self.bot.tools.generate_uuid(True)}&max_id={max_id}')
+        return UserFollowersResponse(query)
 
     def get_pending_follow_requests(self):
         query = self.bot.request('friendships/pending?')
@@ -112,20 +114,6 @@ class User:
     def get_user_following(self, user_id, max_id: str = None):
         if max_id == None:
             query = self.bot.request(f'friendships/{user_id}/following/?rank_token=' + self.bot.tools.generate_uuid(True))
-            return UserResponse(query['users'])
-        query = self.bot.request(f'friendships/{user_id}/following/?rank_token={self.bot.tools.generate_uuid(True)}&max_id={max_id}')
-        return UserResponse(query['users'])
-
-    def get_all_followers(self, user_id):
-        followers = []
-        next_max_id: str = None
-        while 1:
-            self.get_user_followers(user_id, next_max_id)
-            temp = self.bot.last_json_response
-
-            for item in temp["users"]:
-                followers.append(item)
-
-            if temp["big_list"] is False:
-                return followers
-            next_max_id = temp["next_max_id"]
+        else:        
+            query = self.bot.request(f'friendships/{user_id}/following/?rank_token={self.bot.tools.generate_uuid(True)}&max_id={max_id}')
+        return UserFollowingResponse(query)

@@ -3,7 +3,7 @@ from instapv.bot import Bot
 bot = Bot('USERNAME', 'PASSWORD')
 
 login_response = bot.login()
-
+b = bot.user.get_user_following()
 if login_response.two_factor_required:
     identifier = login_response.two_factor_info.two_factor_identifier
     code = input('Enter code: ')

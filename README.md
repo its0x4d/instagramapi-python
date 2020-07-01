@@ -1,4 +1,5 @@
 # Instagram Private API.
+# WARRNING: Don't use it now!!!
 
 - An unofficial instagram private api.
 
@@ -63,7 +64,7 @@ $ python3 setup.py install
 
 ## Usage
 ```python
-from instapv.bot import Bot
+from instapv import Instagram
 
 bot = Bot('USERNAME', 'PASSWORD')
 
@@ -71,7 +72,7 @@ bot.login() # Without calling login function the script will not work!
 
 if bot.is_logged_in:
     print('Logged in successfuly!')
-    print(bot.account_id)
+    print(bot._uid)
 else:
     print('Invalid username/password')
 ```
